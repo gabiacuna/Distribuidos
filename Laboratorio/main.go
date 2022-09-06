@@ -7,7 +7,7 @@ import (
 	"math/rand"
 	"net"
 
-	pb "github.com/Kendovvul/Ejemplo/Proto"
+	pb "github.com/Sistemas-Distribuidos-2022-2/Tarea1-Grupo22/Proto"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"google.golang.org/grpc"
 )
@@ -16,38 +16,42 @@ type server struct {
 	pb.UnimplementedMessageServiceServer
 }
 
-func (s *server) Intercambio (ctx context.Context, msg *pb.Message) (*pb.Message, error){
+func (s *server) Intercambio(ctx context.Context, msg *pb.Message) (*pb.Message, error) {
 	fmt.Println(msg.Body)
 	fmt.Println(msg.Esc)
 	// TODO probabilidad de contencion
-	if rand.Intn(100) < 60{
-		return &pb.Message{Body: "SI",}, nil
+	if rand.Intn(100) < 60 {
+		return &pb.Message{Body: "SI"}, nil
 	}
- 	return &pb.Message{Body: "NO",}, nil
+	return &pb.Message{Body: "NO"}, nil
 }
 
 func main() {
-	LabName := "Laboratiorio Pripyat" //nombre del laboratorio
-	qName := "Emergencias" //nombre de la cola
-	hostQ := "localhost" //ip del servidor de RabbitMQ 172.17.0.1
-	connQ, err := amqp.Dial("amqp://guest:guest@"+hostQ+":5672") //conexion con RabbitMQ
-	
-	if err != nil {log.Fatal(err)}
+	LabName := "Laboratiorio Pripyat"                                //nombre del laboratorio
+	qName := "Emergencias"                                           //nombre de la cola
+	hostQ := "localhost"                                             //ip del servidor de RabbitMQ 172.17.0.1
+	connQ, err := amqp.Dial("amqp://guest:guest@" + hostQ + ":5672") //conexion con RabbitMQ
+
+	if err != nil {
+		log.Fatal(err)
+	}
 	defer connQ.Close()
 
 	ch, err := connQ.Channel()
-	if err != nil{log.Fatal(err)}
+	if err != nil {
+		log.Fatal(err)
+	}
 	defer ch.Close()
 
 	//Mensaje enviado a la cola de RabbitMQ (Llamado de emergencia)
 	err = ch.Publish("", qName, false, false,
 		amqp.Publishing{
-			Headers: nil,
+			Headers:     nil,
 			ContentType: "text/plain",
-			Body: []byte(LabName),  //Contenido del mensaje
+			Body:        []byte(LabName), //Contenido del mensaje
 		})
 
-	if err != nil{
+	if err != nil {
 		log.Fatal(err)
 	}
 
