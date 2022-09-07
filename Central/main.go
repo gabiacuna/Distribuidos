@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 	"strconv"
 	"time"
 
@@ -13,7 +14,7 @@ import (
 )
 
 func main() {
-	
+
 	qName := "Emergencias"                                           //Nombre de la cola
 	hostQ := "localhost"                                             //Host de RabbitMQ 172.17.0.1
 	hostS := "localhost"                                             //Host de un Laboratorio
@@ -37,7 +38,15 @@ func main() {
 
 	fmt.Println(q)
 
+	//Archivo SOLICITUDES.txt para log
+	file, err := os.Create("SOLICITUDES.txt") //NombreLab;CantidadDeConsultas
+	if err != nil {
+		log.Fatal("No se pudo crear el archivo SOLICITUDES.txt: " + err.Error())
+	}
+	defer file.Close()
+
 	merc := 2
+	n_cons := 0
 
 	fmt.Println("Esperando Emergencias")
 	chDelivery, err := ch.Consume(qName, "", true, false, false, false, nil) //obtiene la cola de RabbitMQ
@@ -46,12 +55,14 @@ func main() {
 	}
 
 	for delivery := range chDelivery {
+		n_cons = 0
 		if merc > 0 {
-			port := ":50051"     
-			fmt.Println("\n---------------------------------------------")                                      //puerto de la conexion con el laboratorio
-			fmt.Println("Pedido de ayuda de " + string(delivery.Body) + " [Mensaje asincrono leido]") //obtiene el primer mensaje de la cola
+			port := ":50051"
+			lab := string(delivery.Body)
+			fmt.Println("\n---------------------------------------------")          //puerto de la conexion con el laboratorio
+			fmt.Println("Pedido de ayuda de " + lab + " [Mensaje asincrono leido]") //obtiene el primer mensaje de la cola
 			merc--
-			fmt.Println("Enviando equipo " + strconv.Itoa(merc) + " a " + string(delivery.Body))
+			fmt.Println("Enviando equipo " + strconv.Itoa(merc) + " a " + lab)
 			connS, err := grpc.Dial(hostS+port, grpc.WithInsecure()) //crea la conexion sincrona con el laboratorio
 
 			if err != nil {
@@ -76,6 +87,8 @@ func main() {
 						Esc:  this_esc,
 					})
 
+				n_cons++
+
 				if err != nil {
 					panic("No se puede crear el mensaje " + err.Error())
 				}
@@ -96,6 +109,15 @@ func main() {
 					if connS.GetState().String() != "IDLE" {
 						panic("No se puede cerrar la conexion " + err.Error())
 					}
+
+					line := lab + ";" + strconv.Itoa(n_cons) + "\n"
+
+					_, err = file.WriteString(line)
+
+					if err != nil {
+						log.Fatal("No se pudo escribir en el archivo")
+					}
+
 					// time.Sleep(5 * time.Second) // espera igual si el equipo resuelve el estallido
 					break
 				}
