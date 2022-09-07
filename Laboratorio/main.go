@@ -28,10 +28,10 @@ func (s *server) Intercambio(ctx context.Context, msg *pb.Message) (*pb.Message,
 		this_esc = msg.Esc
 	}
 
-	// if msg.Body == "STOP" {
-	// 	serv.Stop()
-	// 	return &pb.Message{}, nil
-	// }
+	if msg.Body == "STOP" {
+		serv.Stop()
+		return &pb.Message{Body: "", Esc: this_esc}, nil
+	}
 	fmt.Println(msg.Body)
 
 	// TODO probabilidad de contencion

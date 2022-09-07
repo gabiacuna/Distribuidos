@@ -56,7 +56,7 @@ func main() {
 				panic("No se pudo conectar con el servidor" + err.Error())
 			}
 
-			// defer connS.Close()
+			defer connS.Close()
 
 			serviceCliente := pb.NewMessageServiceClient(connS)
 
@@ -80,18 +80,18 @@ func main() {
 
 				fmt.Println(res.Body) //respuesta del laboratorio
 				if res.Body == "SI" {
+					fmt.Println("Ha vuelto a la central el equipo " + this_esc)
 					merc++
 
-					// res, err := serviceCliente.Intercambio(context.Background(),
-					// 	&pb.Message{
-					// 		Body: "STOP",
-					// 	})
+					_, err := serviceCliente.Intercambio(context.Background(),
+						&pb.Message{
+							Body: "STOP",
+						})
 
-					// if err != nil {
-					// 	panic("No se puede crear el mensaje " + err.Error())
-					// }
+					if connS.GetState().String() != "IDLE" {
+						panic("No se puede cerrar la conexion " + err.Error())
+					}
 
-					fmt.Println("Ha vuelto a la central el equipo " + res.Esc)
 					break
 				}
 				time.Sleep(5 * time.Second) //espera de 5 segundos
