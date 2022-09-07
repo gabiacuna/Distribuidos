@@ -13,6 +13,7 @@ import (
 )
 
 func main() {
+	
 	qName := "Emergencias"                                           //Nombre de la cola
 	hostQ := "localhost"                                             //Host de RabbitMQ 172.17.0.1
 	hostS := "localhost"                                             //Host de un Laboratorio
@@ -45,9 +46,9 @@ func main() {
 	}
 
 	for delivery := range chDelivery {
-		fmt.Println("...")
 		if merc > 0 {
-			port := ":50051"                                           //puerto de la conexion con el laboratorio
+			port := ":50051"     
+			fmt.Println("\n---------------------------------------------")                                      //puerto de la conexion con el laboratorio
 			fmt.Println("Pedido de ayuda de " + string(delivery.Body)) //obtiene el primer mensaje de la cola
 			merc--
 			connS, err := grpc.Dial(hostS+port, grpc.WithInsecure()) //crea la conexion sincrona con el laboratorio
@@ -80,7 +81,10 @@ func main() {
 
 				fmt.Println(res.Body) //respuesta del laboratorio
 				if res.Body == "SI" {
-					fmt.Println("Ha vuelto a la central el equipo " + this_esc)
+					// fmt.Println("Ha vuelto a la central el equipo " + this_esc)
+					fmt.Println("Ha vuelto a la central el equipo " + res.Esc)
+
+					fmt.Println("---------------------------------------------\n")
 					merc++
 
 					_, err := serviceCliente.Intercambio(context.Background(),
@@ -91,13 +95,13 @@ func main() {
 					if connS.GetState().String() != "IDLE" {
 						panic("No se puede cerrar la conexion " + err.Error())
 					}
-
+					time.Sleep(5 * time.Second) // espera igual si el equipo resuelve el estallido
 					break
 				}
 				time.Sleep(5 * time.Second) //espera de 5 segundos
 
 			}
-			connS.Close()
+			// connS.Close()
 		}
 	}
 }
