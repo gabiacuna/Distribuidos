@@ -24,7 +24,7 @@ var serv *grpc.Server
 func (s *server) Intercambio(ctx context.Context, msg *pb.Message) (*pb.Message, error) {
 
 	if msg.Esc != "" {
-		fmt.Println("El equipo " + msg.Esc + " ha llegado a ayudar!")
+		fmt.Println("El equipo " + msg.Esc + " ha llegado a contener el estallido!")
 		this_esc = msg.Esc
 	}
 
@@ -37,11 +37,12 @@ func (s *server) Intercambio(ctx context.Context, msg *pb.Message) (*pb.Message,
 	// TODO probabilidad de contencion
 	if rand.Intn(100) < 60 {
 		resolved = true
-
+		fmt.Println("Si!")
 		fmt.Println("Devolviendo escuadron " + this_esc)
 		fmt.Println("---------------------------------------------\n")
 		return &pb.Message{Body: "SI", Esc: this_esc}, nil
 	} else {
+		fmt.Println("No :c")
 		return &pb.Message{Body: "NO"}, nil
 	}
 }
@@ -67,9 +68,10 @@ func main() {
 	for {
 		resolved = false
 		for {
+			fmt.Println("Analizando estado del Laboratorio...")
 			if rand.Intn(100) < 80 {
 				fmt.Println("\n---------------------------------------------")
-				fmt.Println("Ha ocurrido un estallido en " + LabName + "!")
+				fmt.Println("Ha ocurrido un estallido en " + LabName + "! Mandando SOS a Central")
 				//Mensaje enviado a la cola de RabbitMQ (Llamado de emergencia)
 				err = ch.Publish("", qName, false, false,
 					amqp.Publishing{
