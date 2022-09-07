@@ -49,8 +49,9 @@ func main() {
 		if merc > 0 {
 			port := ":50051"     
 			fmt.Println("\n---------------------------------------------")                                      //puerto de la conexion con el laboratorio
-			fmt.Println("Pedido de ayuda de " + string(delivery.Body)) //obtiene el primer mensaje de la cola
+			fmt.Println("Pedido de ayuda de " + string(delivery.Body) + " [Mensaje asincrono leido]") //obtiene el primer mensaje de la cola
 			merc--
+			fmt.Println("Enviando equipo " + strconv.Itoa(merc) + " a " + string(delivery.Body))
 			connS, err := grpc.Dial(hostS+port, grpc.WithInsecure()) //crea la conexion sincrona con el laboratorio
 
 			if err != nil {
@@ -71,7 +72,7 @@ func main() {
 				//envia el mensaje al laboratorio
 				res, err := serviceCliente.Intercambio(context.Background(),
 					&pb.Message{
-						Body: "Equipo listo?",
+						Body: "Estallido resuelto?",
 						Esc:  this_esc,
 					})
 
@@ -79,10 +80,10 @@ func main() {
 					panic("No se puede crear el mensaje " + err.Error())
 				}
 
-				fmt.Println(res.Body) //respuesta del laboratorio
+				fmt.Println("Estallido resuelto?: " + res.Body) //respuesta del laboratorio
 				if res.Body == "SI" {
 					// fmt.Println("Ha vuelto a la central el equipo " + this_esc)
-					fmt.Println("Ha vuelto a la central el equipo " + res.Esc)
+					fmt.Println("Ha vuelto a la central el equipo " + res.Esc + ", se ha cerrado la conexion con " + string(delivery.Body))
 
 					fmt.Println("---------------------------------------------\n")
 					merc++
@@ -95,7 +96,7 @@ func main() {
 					if connS.GetState().String() != "IDLE" {
 						panic("No se puede cerrar la conexion " + err.Error())
 					}
-					time.Sleep(5 * time.Second) // espera igual si el equipo resuelve el estallido
+					// time.Sleep(5 * time.Second) // espera igual si el equipo resuelve el estallido
 					break
 				}
 				time.Sleep(5 * time.Second) //espera de 5 segundos
