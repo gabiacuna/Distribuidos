@@ -39,7 +39,7 @@ func (s *server) Intercambio(ctx context.Context, msg *pb.Message) (*pb.Message,
 		resolved = true
 
 		fmt.Println("Devolviendo escuadron " + this_esc)
-
+		fmt.Println("---------------------------------------------\n")
 		return &pb.Message{Body: "SI", Esc: this_esc}, nil
 	} else {
 		return &pb.Message{Body: "NO"}, nil
@@ -51,7 +51,7 @@ func main() {
 	qName := "Emergencias"                                           //nombre de la cola
 	hostQ := "localhost"                                             //ip del servidor de RabbitMQ 172.17.0.1
 	connQ, err := amqp.Dial("amqp://guest:guest@" + hostQ + ":5672") //conexion con RabbitMQ
-
+	rand.Seed(time.Now().UnixNano())
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -68,6 +68,7 @@ func main() {
 		resolved = false
 		for {
 			if rand.Intn(100) < 80 {
+				fmt.Println("\n---------------------------------------------")
 				fmt.Println("Ha ocurrido un estallido en " + LabName + "!")
 				//Mensaje enviado a la cola de RabbitMQ (Llamado de emergencia)
 				err = ch.Publish("", qName, false, false,
@@ -83,7 +84,7 @@ func main() {
 				break
 				// fmt.Println(LabName)
 			} else {
-				fmt.Println("No hay estallido en " + LabName)
+				fmt.Println("\nNo hay estallido en " + LabName + "\n")
 			}
 			time.Sleep(5 * time.Second)
 		}
@@ -94,7 +95,7 @@ func main() {
 		}
 
 		serv = grpc.NewServer()
-		fmt.Println("New sever")
+		// fmt.Println("New sever")
 
 		// for {
 		pb.RegisterMessageServiceServer(serv, &server{})
@@ -103,8 +104,5 @@ func main() {
 		if err = serv.Serve(listener); err != nil {
 			panic("El server no se pudo iniciar" + err.Error())
 		}
-		// }
-		fmt.Println("End of small for")
-
 	}
 }
