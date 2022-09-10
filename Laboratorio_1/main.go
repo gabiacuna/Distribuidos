@@ -6,6 +6,8 @@ import (
 	"log"
 	"math/rand"
 	"net"
+	"os"
+	"os/signal"
 	"time"
 
 	pb "github.com/Sistemas-Distribuidos-2022-2/Tarea1-Grupo22/Proto"
@@ -32,6 +34,13 @@ func (s *server) Intercambio(ctx context.Context, msg *pb.Message) (*pb.Message,
 		serv.Stop()
 		return &pb.Message{Body: "", Esc: this_esc}, nil
 	}
+	if msg.Body == "END" {
+		fmt.Println("Cerrando Laboratorio")
+		defer serv.Stop()
+		defer os.Exit(3)
+		return &pb.Message{Body: " ", Esc: ""}, nil
+	}
+
 	fmt.Println(msg.Body)
 
 	// TODO probabilidad de contencion
@@ -64,6 +73,31 @@ func main() {
 	}
 	defer ch.Close()
 	fmt.Println("Estamos en " + LabName)
+
+	listener_close, err_c := net.Listen("tcp", ":50055") //conexion sincrona
+	if err_c != nil {
+		panic("La conexion no se pudo crear" + err_c.Error())
+	}		
+	serv = grpc.NewServer()
+	pb.RegisterMessageServiceServer(serv, &server{})
+
+	go func(){
+		if err_c = serv.Serve(listener_close); err_c != nil {
+			panic("El server no se pudo iniciar" + err_c.Error())
+		}	
+	}()	
+
+	c := make(chan os.Signal, 1)
+			signal.Notify(c, os.Interrupt)
+			go func(){
+				for sig := range c {					
+					fmt.Println("Cerrando Laboratorio ctrl-c")
+					fmt.Println(sig)
+					connQ.Close()
+					serv.Stop()
+					os.Exit(3)
+				}
+			}()
 
 	for {
 		resolved = false

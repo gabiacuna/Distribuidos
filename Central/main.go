@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/signal"
 	"strconv"
+	"sync"
 	"time"
 
 	pb "github.com/Sistemas-Distribuidos-2022-2/Tarea1-Grupo22/Proto"
@@ -120,6 +122,32 @@ func send_merc(port string, hostS string, lab_name string, file *os.File) {
 	return
 }
 
+func Shutdown(port string, c chan os.Signal, hostS string, wg *sync.WaitGroup){
+	for sig := range c {
+		connG, err := grpc.Dial(hostS+port, grpc.WithInsecure()) //crea la conexion sincrona con el laboratorio
+		if err != nil {
+			panic("No se pudo conectar con el servidor" + err.Error())
+		}
+		
+		serviceCliente := pb.NewMessageServiceClient(connG)	
+		res1, err1 := serviceCliente.Intercambio(context.Background(),
+			&pb.Message{
+				Body: "END",
+			})
+
+		
+		fmt.Println("Cerrando central y Laboratorios")
+		if connG.GetState().String() != "IDLE" {
+			panic("No se puede cerrar la conexion " + err1.Error())
+		}
+		defer wg.Done()
+		fmt.Println(sig)
+		connG.Close()
+		os.Exit(3)
+		fmt.Println(res1)
+	}
+}
+
 func main() {
 	qName := "Emergencias" //Nombre de la cola
 	hostQ := "localhost"   //Host de RabbitMQ 172.17.0.1
@@ -129,6 +157,13 @@ func main() {
 	port_lab2 := ":50052"
 	port_lab3 := ":50053"
 	port_lab4 := ":50054"
+
+	// Puertos de cierre Laboratorios
+	var close [4]string
+	close[0] = ":50055"
+	close[1] = ":50056"
+	close[2] = ":50057"
+	close[3] = ":50058"
 
 	name_lab1 := "Laboratorio Renca"
 	name_lab2 := "Laboratorio Pohang"
@@ -156,30 +191,40 @@ func main() {
 	defer file.Close()
 
 	merc = 2
+	var wg sync.WaitGroup
+	wg.Add(4)  
 
+
+	c := make(chan os.Signal, 1)
+		signal.Notify(c, os.Interrupt)
+		for _,p := range close{
+			go Shutdown(p, c, hostS, &wg)
+			fmt.Println("lab cerrado")
+		}
+	wg.Wait()
 	fmt.Println("Esperando Emergencias")
 	chDelivery, err := ch.Consume(qName, "", false, false, false, false, nil) //obtiene la cola de RabbitMQ
 	custom_fatal(err)
 
 	for delivery := range chDelivery {
 		if merc > 0 {
-			port := ""
+			port_sos := ""
 			delivery.Ack(false) // only ACK this msg
 
 			lab := string(delivery.Body)
 
 			if lab == name_lab1 {
-				port = port_lab1
+				port_sos = port_lab1
 			} else if lab == name_lab2 {
-				port = port_lab2
+				port_sos = port_lab2
 			} else if lab == name_lab3 {
-				port = port_lab3
+				port_sos = port_lab3
 			} else if lab == name_lab4 {
-				port = port_lab4
+				port_sos = port_lab4
 			}
 
-			fmt.Println("\n------\n" + port + "\n------\n" + lab)
-			go send_merc(port, hostS, lab, file)
+			fmt.Println("\n------\n" + port_sos + "\n------\n" + lab)
+			go send_merc(port_sos, hostS, lab, file)
 		}
 		time.Sleep(5 * time.Second) //espera de 5 segundos
 
