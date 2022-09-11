@@ -59,7 +59,7 @@ func (s *server) Intercambio(ctx context.Context, msg *pb.Message) (*pb.Message,
 func main() {
 	LabName := "Laboratorio Pohang"                                //nombre del laboratorio
 	qName := "Emergencias"                                         //nombre de la cola
-	hostQ := "200.1.20.168"                                        //ip del servidor de RabbitMQ 172.17.0.1
+	hostQ := "dist085"                                             //ip del servidor de RabbitMQ 172.17.0.1
 	connQ, err := amqp.Dial("amqp://test:test@" + hostQ + ":5672") //conexion con RabbitMQ
 	rand.Seed(time.Now().UnixNano())
 	if err != nil {
