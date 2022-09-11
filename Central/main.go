@@ -157,7 +157,7 @@ func Shutdown(port [4]string, c chan os.Signal, hostS string, connMQ *amqp.Conne
 
 func main() {
 	qName := "Emergencias" //Nombre de la cola
-	hostQ := "localhost"   //Host de RabbitMQ 172.17.0.1
+	hostQ := "dist085"     //Host de RabbitMQ 172.17.0.1
 	hostS := "localhost"   //Host de un Laboratorio
 
 	port_lab1 := ":50051"
@@ -177,7 +177,7 @@ func main() {
 	name_lab3 := "Laboratorio Kampala"
 	name_lab4 := "Laboratorio Pripyat"
 
-	connQ, err := amqp.Dial("amqp://guest:guest@" + hostQ + ":5672") //Conexion con RabbitMQ
+	connQ, err := amqp.Dial("amqp://test:test@" + hostQ + ":5672") //Conexion con RabbitMQ
 	custom_fatal(err)
 	defer connQ.Close()
 

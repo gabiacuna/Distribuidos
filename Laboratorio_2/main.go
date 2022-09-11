@@ -57,10 +57,10 @@ func (s *server) Intercambio(ctx context.Context, msg *pb.Message) (*pb.Message,
 }
 
 func main() {
-	LabName := "Laboratorio Pohang"                                  //nombre del laboratorio
-	qName := "Emergencias"                                           //nombre de la cola
-	hostQ := "localhost"                                             //ip del servidor de RabbitMQ 172.17.0.1
-	connQ, err := amqp.Dial("amqp://guest:guest@" + hostQ + ":5672") //conexion con RabbitMQ
+	LabName := "Laboratorio Pohang"                                //nombre del laboratorio
+	qName := "Emergencias"                                         //nombre de la cola
+	hostQ := "dist085"                                             //ip del servidor de RabbitMQ 172.17.0.1
+	connQ, err := amqp.Dial("amqp://test:test@" + hostQ + ":5672") //conexion con RabbitMQ
 	rand.Seed(time.Now().UnixNano())
 	if err != nil {
 		log.Fatal(err)
@@ -77,27 +77,27 @@ func main() {
 	listener_close, err_c := net.Listen("tcp", ":50056") //conexion sincrona
 	if err_c != nil {
 		panic("La conexion no se pudo crear" + err_c.Error())
-	}		
+	}
 	serv = grpc.NewServer()
 	pb.RegisterMessageServiceServer(serv, &server{})
 
-	go func(){
+	go func() {
 		if err_c = serv.Serve(listener_close); err_c != nil {
 			panic("El server no se pudo iniciar" + err_c.Error())
-		}	
-	}()	
+		}
+	}()
 
 	c := make(chan os.Signal, 1)
-			signal.Notify(c, os.Interrupt)
-			go func(){
-				for sig := range c {					
-					fmt.Println("Cerrando Laboratorio ctrl-c")
-					fmt.Println(sig)
-					connQ.Close()
-					serv.Stop()
-					os.Exit(3)
-				}
-			}()
+	signal.Notify(c, os.Interrupt)
+	go func() {
+		for sig := range c {
+			fmt.Println("Cerrando Laboratorio ctrl-c")
+			fmt.Println(sig)
+			connQ.Close()
+			serv.Stop()
+			os.Exit(3)
+		}
+	}()
 
 	for {
 		resolved = false
