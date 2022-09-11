@@ -177,7 +177,7 @@ func main() {
 	name_lab3 := "Laboratorio Kampala"
 	name_lab4 := "Laboratorio Pripyat"
 
-	connQ, err := amqp.Dial("amqp://test:test@" + hostQ + ":5672") //Conexion con RabbitMQ
+	connQ, err := amqp.Dial("amqp://guest:guest@" + hostQ + ":5672") //Conexion con RabbitMQ
 	custom_fatal(err)
 	defer connQ.Close()
 
@@ -234,8 +234,9 @@ func main() {
 				port_sos = port_lab4
 				host_sos = "dist088"
 			}
+			host_sos = "localhost"
 
-			fmt.Println("\n------\n" + port_sos + "\n------\n" + lab)
+			fmt.Println("\n------\n" + port_sos + "-" + host_sos + "\n------\n" + lab)
 			go send_merc(port_sos, host_sos, lab, file)
 		}
 		time.Sleep(5 * time.Second) //espera de 5 segundos
