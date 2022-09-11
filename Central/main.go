@@ -157,8 +157,8 @@ func Shutdown(port [4]string, c chan os.Signal, hostS string, connMQ *amqp.Conne
 
 func main() {
 	qName := "Emergencias" //Nombre de la cola
-	hostQ := "dist085"     //Host de RabbitMQ 172.17.0.1
-	hostS := "localhost"   //Host de un Laboratorio
+	hostQ := "localhost"   //Host de RabbitMQ 172.17.0.1
+	hostS := "dist085"     //Host de un Laboratorio
 
 	port_lab1 := ":50051"
 	port_lab2 := ":50052"
