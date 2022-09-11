@@ -7,7 +7,6 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
-	"sync"
 	"time"
 
 	pb "github.com/Sistemas-Distribuidos-2022-2/Tarea1-Grupo22/Proto"
@@ -122,30 +121,38 @@ func send_merc(port string, hostS string, lab_name string, file *os.File) {
 	return
 }
 
-func Shutdown(port string, c chan os.Signal, hostS string, wg *sync.WaitGroup){
+func Shutdown(port [4]string, c chan os.Signal, hostS string, connMQ *amqp.Connection) {
+	fmt.Println(c)
+	flag := true
 	for sig := range c {
-		connG, err := grpc.Dial(hostS+port, grpc.WithInsecure()) //crea la conexion sincrona con el laboratorio
-		if err != nil {
-			panic("No se pudo conectar con el servidor" + err.Error())
-		}
-		
-		serviceCliente := pb.NewMessageServiceClient(connG)	
-		res1, err1 := serviceCliente.Intercambio(context.Background(),
-			&pb.Message{
-				Body: "END",
-			})
+		for _, p := range port {
+			if flag {
+				connMQ.Close()
+				flag = false
+			}
+			connG, err := grpc.Dial(hostS+p, grpc.WithInsecure()) //crea la conexion sincrona con el laboratorio
+			if err != nil {
+				panic("No se pudo conectar con el servidor" + err.Error())
+			}
 
-		
-		fmt.Println("Cerrando central y Laboratorios")
-		if connG.GetState().String() != "IDLE" {
-			panic("No se puede cerrar la conexion " + err1.Error())
+			serviceCliente := pb.NewMessageServiceClient(connG)
+			res1, err1 := serviceCliente.Intercambio(context.Background(),
+				&pb.Message{
+					Body: "END",
+				})
+
+			fmt.Println("Cerrando central y Laboratorios")
+			if connG.GetState().String() != "IDLE" {
+				panic("No se puede cerrar la conexion " + err1.Error())
+			}
+			// defer wg.Done()
+			fmt.Println(sig)
+			connG.Close()
+			fmt.Println(res1)
 		}
-		defer wg.Done()
-		fmt.Println(sig)
-		connG.Close()
-		os.Exit(3)
-		fmt.Println(res1)
 	}
+	fmt.Println("Central cerrada")
+	os.Exit(3)
 }
 
 func main() {
@@ -159,11 +166,11 @@ func main() {
 	port_lab4 := ":50054"
 
 	// Puertos de cierre Laboratorios
-	var close [4]string
-	close[0] = ":50055"
-	close[1] = ":50056"
-	close[2] = ":50057"
-	close[3] = ":50058"
+	var close_port [4]string
+	close_port[0] = ":50055"
+	close_port[1] = ":50056"
+	close_port[2] = ":50057"
+	close_port[3] = ":50058"
 
 	name_lab1 := "Laboratorio Renca"
 	name_lab2 := "Laboratorio Pohang"
@@ -191,17 +198,17 @@ func main() {
 	defer file.Close()
 
 	merc = 2
-	var wg sync.WaitGroup
-	wg.Add(4)  
-
+	// var wg_shutdown sync.WaitGroup
+	// wg_shutdown.Add(4)
 
 	c := make(chan os.Signal, 1)
-		signal.Notify(c, os.Interrupt)
-		for _,p := range close{
-			go Shutdown(p, c, hostS, &wg)
-			fmt.Println("lab cerrado")
-		}
-	wg.Wait()
+	signal.Notify(c, os.Interrupt)
+	go Shutdown(close_port, c, hostS, connQ)
+	// for _, p := range close_port {
+	// fmt.Println("lab cerrado")
+	// }
+
+	// wg.Wait()
 	fmt.Println("Esperando Emergencias")
 	chDelivery, err := ch.Consume(qName, "", false, false, false, false, nil) //obtiene la cola de RabbitMQ
 	custom_fatal(err)

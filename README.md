@@ -18,3 +18,5 @@ Para la central.
 Para el Laboratorio
 
     go run Laboratorio/main.go
+
+TODO agregar lore 
