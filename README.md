@@ -20,3 +20,10 @@ Para el Laboratorio
     go run Laboratorio/main.go
 
 TODO agregar lore 
+
+maquinas
+
+dist085 -> lab1 + central
+dist086 -> lab2
+dist087 -> lab3
+dist088 -> lab4

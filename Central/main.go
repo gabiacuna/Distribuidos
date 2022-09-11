@@ -216,22 +216,27 @@ func main() {
 	for delivery := range chDelivery {
 		if merc > 0 {
 			port_sos := ""
+			host_sos := ""
 			delivery.Ack(false) // only ACK this msg
 
 			lab := string(delivery.Body)
 
 			if lab == name_lab1 {
 				port_sos = port_lab1
+				host_sos = "dist085"
 			} else if lab == name_lab2 {
 				port_sos = port_lab2
+				host_sos = "dist086"
 			} else if lab == name_lab3 {
 				port_sos = port_lab3
+				host_sos = "dist087"
 			} else if lab == name_lab4 {
 				port_sos = port_lab4
+				host_sos = "dist088"
 			}
 
 			fmt.Println("\n------\n" + port_sos + "\n------\n" + lab)
-			go send_merc(port_sos, hostS, lab, file)
+			go send_merc(port_sos, host_sos, lab, file)
 		}
 		time.Sleep(5 * time.Second) //espera de 5 segundos
 
